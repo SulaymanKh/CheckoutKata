@@ -1,127 +1,148 @@
-namespace CheckoutKata.Tests;
+using System;
+using Xunit;
+using CheckoutKata;
 
-public class CheckoutSystemTest
+namespace CheckoutKata.Tests
 {
-    private Dictionary<string, (int, int)> pricingRules;
-
-    public CheckoutSystemTest()
+    public class CheckoutSystemTest
     {
-        pricingRules = new Dictionary<string, (int, int)>
+        public Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> pricingRules;
+
+        public CheckoutSystemTest()
         {
-            {"A", (1, 50) },
-            {"B", (1, 30) },
-            {"C", (1, 20) },
-            {"D", (1, 15) }
-        };
-    }
+            pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
+            {
+                {"A", (50, (1, 50)) },
+                {"B", (30, (1, 30)) },
+                {"C", (20, (1, 20)) },
+                {"D", (15, (1, 15)) }
+            };
+        }
 
-    [Fact]
-    public void Scan_ExistingItem_AddsItemToList()
-    {
-        //Arrange
-        var checkout = new Checkout(pricingRules);
-        string sku = "A";
-
-        //Act
-        checkout.Scan(sku);
-
-        //Assert
-        Assert.Contains(sku, checkout._scannedItems);
-    }
-
-    [Fact]
-    public void Scan_NonExistingItem_ThrowsError()
-    {
-        //Arrange
-        var checkout = new Checkout(pricingRules);
-        string? error = null;
-        string sku = "Z";
-
-        //Act
-        try
+        [Fact]
+        public void Scan_ExistingItem_AddsItemToList()
         {
+            //Arrange
+            var checkout = new Checkout(pricingRules);
+            string sku = "A";
+
+            //Act
             checkout.Scan(sku);
+
+            //Assert
+            Assert.Contains(sku, checkout._scannedItems);
         }
-        catch (Exception ex)
+
+        [Fact]
+        public void Scan_NonExistingItem_ThrowsError()
         {
-            error = ex.Message;
+            //Arrange
+            var checkout = new Checkout(pricingRules);
+            string error = null;
+            string sku = "Z";
+
+            //Act
+            try
+            {
+                checkout.Scan(sku);
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+            }
+
+            //Assert
+            Assert.NotNull(error);
+            Assert.Equal($"Invalid Item {sku} Scanned!", error);
         }
 
-        //Assert
-        Assert.NotNull(error);
-        Assert.Equal($"Invalid Item {sku} Scanned!", error);
-    }
-
-    [Fact]
-    public void Scan_ExistingItem_AddsToTotalPriceUsingSpecialOffer()
-    {
-        //Arrange
-        pricingRules = new Dictionary<string, (int, int)>
+        [Fact]
+        public void Scan_ExistingItem_AddsToTotalPriceUsingSpecialOffer()
         {
-            {"A", (3, 150) },
-            {"B", (2, 45) },
-            {"C", (1, 20) },
-            {"D", (1, 15) }
-        };
-        var checkout = new Checkout(pricingRules);
+            //Arrange
+            pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
+            {
+                {"A", (50, (1, 50)) },
+                {"B", (30, (2, 45)) },
+                {"C", (20, (1, 20)) },
+                {"D", (15, (1, 15)) }
+            };
+            var checkout = new Checkout(pricingRules);
 
-        //Act
-        checkout.Scan("B");
-        checkout.Scan("B");
-        int totalPrice = checkout.GetTotalPrice();
+            //Act
+            checkout.Scan("B");
+            checkout.Scan("B");
+            int totalPrice = checkout.GetTotalPrice();
 
-        //Assert
-        Assert.Equal(45, totalPrice);
-    }
+            //Assert
+            Assert.Equal(45, totalPrice);
+        }
 
-    [Fact]
-    public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOffers()
-    {
-        //Arrange
-        pricingRules = new Dictionary<string, (int, int)>
+        [Fact]
+        public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOffers()
         {
-            {"A", (3, 150) },
-            {"B", (2, 45) },
-            {"C", (1, 20) },
-            {"D", (1, 15) }
-        };
-        var checkout = new Checkout(pricingRules);
+            //Arrange
+            pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
+            {
+                {"A", (50, (3, 130)) },
+                {"B", (30, (2, 45)) },
+                {"C", (20, (1, 20)) },
+                {"D", (15, (1, 15)) }
+            };
+            var checkout = new Checkout(pricingRules);
 
-        //Act
-        checkout.Scan("B");
-        checkout.Scan("B");
-        checkout.Scan("A");
-        checkout.Scan("A");
-        checkout.Scan("A");
-        int totalPrice = checkout.GetTotalPrice();
+            //Act
+            checkout.Scan("B");
+            checkout.Scan("B");
+            checkout.Scan("B");
+            checkout.Scan("A");
+            checkout.Scan("A");
+            int totalPrice = checkout.GetTotalPrice();
 
-        //Assert
-        Assert.Equal(195, totalPrice);
-    }
+            //Assert
+            Assert.Equal(175, totalPrice);
+        }
 
-    [Fact]
-    public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOfferInDifferentOrder()
-    {
-        //Arrange
-        pricingRules = new Dictionary<string, (int, int)>
+        [Fact]
+        public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOfferInDifferentOrder()
         {
-            {"A", (3, 150) },
-            {"B", (2, 45) },
-            {"C", (1, 20) },
-            {"D", (1, 15) }
-        };
-        var checkout = new Checkout(pricingRules);
+            //Arrange
+            pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
+            {
+                {"A", (50, (3, 130)) },
+                {"B", (30, (2, 45)) },
+                {"C", (20, (1, 20)) },
+                {"D", (15, (1, 15)) }
+            };
+            var checkout = new Checkout(pricingRules);
 
-        //Act
-        checkout.Scan("A");
-        checkout.Scan("B");
-        checkout.Scan("A");
-        checkout.Scan("A");
-        checkout.Scan("B");
-        int totalPrice = checkout.GetTotalPrice();
+            //Act
+            checkout.Scan("A");
+            checkout.Scan("B");
+            checkout.Scan("A");
+            checkout.Scan("A");
+            checkout.Scan("B");
+            int totalPrice = checkout.GetTotalPrice();
 
-        //Assert
-        Assert.Equal(195, totalPrice);
+            //Assert
+            Assert.Equal(175, totalPrice);
+        }
+
+        [Fact]
+        public void Scan_ExistingItem_AddsToTotalPriceWithNoOffer()
+        {
+            //Arrange
+            var checkout = new Checkout(pricingRules);
+
+            //Act
+            checkout.Scan("A");
+            checkout.Scan("B");
+            checkout.Scan("C");
+            checkout.Scan("D");
+            int totalPrice = checkout.GetTotalPrice();
+
+            //Assert
+            Assert.Equal(115, totalPrice);
+        }
     }
 }
-

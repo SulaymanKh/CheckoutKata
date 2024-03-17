@@ -1,4 +1,8 @@
-﻿namespace CheckoutKata
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CheckoutKata
 {
     interface ICheckout
     {
@@ -8,14 +12,13 @@
 
     public class Checkout : ICheckout
     {
-        private readonly Dictionary<string, (int, int)> _pricingRules;
+        private readonly Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> _pricingRules;
 
         public readonly List<string> _scannedItems = new List<string>();
 
-        public Checkout(Dictionary<string, (int, int)> pricingRules)
+        public Checkout(Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> pricingRules)
         {
             _pricingRules = pricingRules;
-            _scannedItems = new List<string>();
         }
 
         public void Scan(string sku)
@@ -34,16 +37,19 @@
         {
             int totalPrice = 0;
 
-            foreach (var item in _pricingRules.Keys)
+            foreach (var item in _scannedItems.Distinct())
             {
-                var quantity = _pricingRules[item].Item1;
-                var price = _pricingRules[item].Item2;
+                var unitPrice = _pricingRules[item].UnitPrice;
+                var specialQuantity = _pricingRules[item].Item2.SpecialQuantity;
+                var specialPrice = _pricingRules[item].Item2.SpecialPrice;
 
                 var itemCount = _scannedItems.Count(x => x == item);
-                var specialOffersUsed = itemCount / quantity;
-                var remainingItems = itemCount % quantity;
+                var specialOffersUsed = itemCount / specialQuantity;
+                var remainingItems = itemCount % specialQuantity;
 
-                totalPrice += specialOffersUsed * price + remainingItems * price;
+                totalPrice += specialOffersUsed * specialPrice;
+
+                totalPrice += remainingItems * unitPrice;
             }
 
             return totalPrice;
