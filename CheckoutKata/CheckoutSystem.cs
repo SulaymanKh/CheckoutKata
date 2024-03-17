@@ -13,7 +13,6 @@ namespace CheckoutKata
     public class Checkout : ICheckout
     {
         private readonly Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> _pricingRules;
-
         public readonly List<string> _scannedItems = new List<string>();
 
         public Checkout(Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> pricingRules)
@@ -29,7 +28,7 @@ namespace CheckoutKata
             }
             else
             {
-                throw new Exception($"Invalid Item {sku} Scanned!");
+                throw new Exception($"Invalid SKU {sku} Scanned!");
             }
         }
 
@@ -37,13 +36,13 @@ namespace CheckoutKata
         {
             int totalPrice = 0;
 
-            foreach (var item in _scannedItems.Distinct())
+            foreach (var sku in _scannedItems.Distinct())
             {
-                var unitPrice = _pricingRules[item].UnitPrice;
-                var specialQuantity = _pricingRules[item].Item2.SpecialQuantity;
-                var specialPrice = _pricingRules[item].Item2.SpecialPrice;
+                var unitPrice = _pricingRules[sku].UnitPrice;
+                var specialQuantity = _pricingRules[sku].Item2.SpecialQuantity;
+                var specialPrice = _pricingRules[sku].Item2.SpecialPrice;
 
-                var itemCount = _scannedItems.Count(x => x == item);
+                var itemCount = _scannedItems.Count(x => x == sku);
                 var specialOffersUsed = itemCount / specialQuantity;
                 var remainingItems = itemCount % specialQuantity;
 

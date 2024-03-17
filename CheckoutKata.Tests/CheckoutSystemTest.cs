@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 using CheckoutKata;
 
@@ -6,21 +7,21 @@ namespace CheckoutKata.Tests
 {
     public class CheckoutSystemTest
     {
-        public Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> pricingRules;
+        private Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))> pricingRules;
 
         public CheckoutSystemTest()
         {
             pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
             {
                 {"A", (50, (1, 50)) },
-                {"B", (30, (1, 30)) },
+                {"B", (30, (2, 45)) },
                 {"C", (20, (1, 20)) },
                 {"D", (15, (1, 15)) }
             };
         }
 
         [Fact]
-        public void Scan_ExistingItem_AddsItemToList()
+        public void Scan_ValidItem_AddsItemToList()
         {
             //Arrange
             var checkout = new Checkout(pricingRules);
@@ -38,7 +39,7 @@ namespace CheckoutKata.Tests
         {
             //Arrange
             var checkout = new Checkout(pricingRules);
-            string error = null;
+            string? error = null;
             string sku = "Z";
 
             //Act
@@ -53,11 +54,11 @@ namespace CheckoutKata.Tests
 
             //Assert
             Assert.NotNull(error);
-            Assert.Equal($"Invalid Item {sku} Scanned!", error);
+            Assert.Equal($"Invalid SKU {sku} Scanned!", error);
         }
 
         [Fact]
-        public void Scan_ExistingItem_AddsToTotalPriceUsingSpecialOffer()
+        public void Scan_ValidItem_AddsToTotalPriceWithSpecialOffer()
         {
             //Arrange
             pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
@@ -79,7 +80,7 @@ namespace CheckoutKata.Tests
         }
 
         [Fact]
-        public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOffers()
+        public void Scan_ValidItem_AddsToTotalPriceWithMultipleSpecialOffers()
         {
             //Arrange
             pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
@@ -104,7 +105,7 @@ namespace CheckoutKata.Tests
         }
 
         [Fact]
-        public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOfferInDifferentOrder()
+        public void Scan_ValidItem_AddsToTotalPriceWithMultipleSpecialOffersInDifferentOrder()
         {
             //Arrange
             pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
@@ -129,7 +130,7 @@ namespace CheckoutKata.Tests
         }
 
         [Fact]
-        public void Scan_ExistingItem_AddsToTotalPriceWithNoOffer()
+        public void Scan_ValidItem_AddsToTotalPriceWithNoOffer()
         {
             //Arrange
             var checkout = new Checkout(pricingRules);
@@ -143,6 +144,43 @@ namespace CheckoutKata.Tests
 
             //Assert
             Assert.Equal(115, totalPrice);
+        }
+
+        [Fact]
+        public void Scan_ValidItem_AddsToTotalPriceWithMultipleSameProductsAndUseOffer()
+        {
+            //Arrange
+            pricingRules = new Dictionary<string, (int UnitPrice, (int SpecialQuantity, int SpecialPrice))>
+            {
+                {"A", (50, (1, 50)) },
+                {"B", (30, (2, 45)) },
+                {"C", (20, (1, 20)) },
+                {"D", (15, (1, 15)) }
+            };
+            var checkout = new Checkout(pricingRules);
+
+            //Act
+            checkout.Scan("B");
+            checkout.Scan("B");
+            checkout.Scan("B");
+            checkout.Scan("B");
+            int totalPrice = checkout.GetTotalPrice();
+
+            //Assert
+            Assert.Equal(90, totalPrice);
+        }
+
+        [Fact]
+        public void Scan_NoItem_AddsToTotalPrice()
+        {
+            //Arrange
+            var checkout = new Checkout(pricingRules);
+
+            //Act
+            int totalPrice = checkout.GetTotalPrice();
+
+            //Assert
+            Assert.Equal(0, totalPrice);
         }
     }
 }
