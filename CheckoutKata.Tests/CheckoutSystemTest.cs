@@ -28,6 +28,29 @@ public class CheckoutSystemTest
         //Assert
         Assert.Contains(sku, checkout._scannedItems);
     }
+
+    [Fact]
+    public void Scan_NonExistingItem_ThrowsError()
+    {
+        //Arrange
+        var checkout = new Checkout(pricingRules);
+        string? error = null;
+        string sku = "Z";
+
+        //Act
+        try
+        {
+            checkout.Scan(sku);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+
+        //Assert
+        Assert.NotNull(error);
+        Assert.Equal($"Invalid Item {sku} Scanned!", error);
+    }
 }
 
 interface ICheckout
@@ -49,6 +72,13 @@ public class Checkout : ICheckout
 
     public void Scan(string sku)
     {
-        _scannedItems.Add(sku);
+        if (_pricingRules.ContainsKey(sku))
+        {
+            _scannedItems.Add(sku);
+        }
+        else
+        {
+            throw new Exception($"Invalid Item {sku} Scanned!");
+        }
     }
 }
