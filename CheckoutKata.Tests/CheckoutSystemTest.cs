@@ -109,20 +109,18 @@ public class Checkout : ICheckout
     {
         int totalPrice = 0;
 
-        foreach (var item in _scannedItems)
+        foreach (var item in _pricingRules.Keys)
         {
-            if (_pricingRules.ContainsKey(item))
-            {
-                var pricingRule = _pricingRules[item];
+            var quantity = _pricingRules[item].Item1;
+            var price = _pricingRules[item].Item2;
 
-                int quantity = pricingRule.Item1;
-                int price = pricingRule.Item2;
+            var itemCount = _scannedItems.Count(x => x == item);
+            var specialOffersUsed = itemCount / quantity;
+            var remainingItems = itemCount % quantity;
 
-                int specialPrice = _scannedItems.Count(x => x == item) / quantity;
-
-                totalPrice += specialPrice * price;
-            }
+            totalPrice += specialOffersUsed * price + remainingItems * price;
         }
+
         return totalPrice;
     }
 }
