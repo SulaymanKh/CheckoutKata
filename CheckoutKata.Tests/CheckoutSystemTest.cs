@@ -73,6 +73,56 @@ public class CheckoutSystemTest
         //Assert
         Assert.Equal(45, totalPrice);
     }
+
+    [Fact]
+    public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOffers()
+    {
+        //Arrange
+        pricingRules = new Dictionary<string, (int, int)>
+        {
+            {"A", (3, 150) },
+            {"B", (2, 45) },
+            {"C", (1, 20) },
+            {"D", (1, 15) }
+        };
+        var checkout = new Checkout(pricingRules);
+
+        //Act
+        checkout.Scan("B");
+        checkout.Scan("B");
+        checkout.Scan("A");
+        checkout.Scan("A");
+        checkout.Scan("A");
+        int totalPrice = checkout.GetTotalPrice();
+
+        //Assert
+        Assert.Equal(195, totalPrice);
+    }
+
+    [Fact]
+    public void Scan_ExistingItem_AddsToTotalPriceWithMultipleSpecialOfferInDifferentOrder()
+    {
+        //Arrange
+        pricingRules = new Dictionary<string, (int, int)>
+        {
+            {"A", (3, 150) },
+            {"B", (2, 45) },
+            {"C", (1, 20) },
+            {"D", (1, 15) }
+        };
+        var checkout = new Checkout(pricingRules);
+
+        //Act
+        checkout.Scan("A");
+        checkout.Scan("B");
+        checkout.Scan("A");
+        checkout.Scan("A");
+        checkout.Scan("B");
+        int totalPrice = checkout.GetTotalPrice();
+
+        //Assert
+        Assert.Equal(195, totalPrice);
+    }
 }
 
 interface ICheckout
