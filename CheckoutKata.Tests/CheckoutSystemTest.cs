@@ -51,11 +51,34 @@ public class CheckoutSystemTest
         Assert.NotNull(error);
         Assert.Equal($"Invalid Item {sku} Scanned!", error);
     }
+
+    [Fact]
+    public void Scan_ExistingItem_AddsToTotalPriceUsingSpecialOffer()
+    {
+        //Arrange
+        pricingRules = new Dictionary<string, (int, int)>
+        {
+            {"A", (3, 150) },
+            {"B", (2, 45) },
+            {"C", (1, 20) },
+            {"D", (1, 15) }
+        };
+        var checkout = new Checkout(pricingRules);
+
+        //Act
+        checkout.Scan("B");
+        checkout.Scan("B");
+        int totalPrice = checkout.GetTotalPrice();
+
+        //Assert
+        Assert.Equal(45, totalPrice);
+    }
 }
 
 interface ICheckout
 {
     void Scan(string item);
+    int GetTotalPrice();
 }
 
 public class Checkout : ICheckout
@@ -80,5 +103,26 @@ public class Checkout : ICheckout
         {
             throw new Exception($"Invalid Item {sku} Scanned!");
         }
+    }
+
+    public int GetTotalPrice()
+    {
+        int totalPrice = 0;
+
+        foreach (var item in _scannedItems)
+        {
+            if (_pricingRules.ContainsKey(item))
+            {
+                var pricingRule = _pricingRules[item];
+
+                int quantity = pricingRule.Item1;
+                int price = pricingRule.Item2;
+
+                int specialPrice = _scannedItems.Count(x => x == item) / quantity;
+
+                totalPrice += specialPrice * price;
+            }
+        }
+        return totalPrice;
     }
 }
